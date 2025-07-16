@@ -54,7 +54,7 @@ sig_m = 1;
     %Specify seed as a nonnegative integer, such as rng(1), to initialize the random number generator with that seed.
     %Specify seed as "shuffle" to initialize the generator seed based on the current time.
 
-%rng = 1;
+%rng(1);
 
 
 % Troubleshooting param - how many matings are being skipped? 
