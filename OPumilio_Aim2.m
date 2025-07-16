@@ -126,14 +126,6 @@ for t = 1:tmax
 
     %   Assume polygyny / replacement
 
-    % Call wts(:,j) for dist centered on each bin ; 
-    % female will "choose" a bin then choose randomly from males in that bin
-    % so eg all females with bin 2 listed will actually be ASSIGNED a bin based
-    % on the random data pulls, then input THAT bin into the mating loop
-    %so need 2 sep loops, 1 to assign bins in new vec  (then replace bins?)
-    %then mating loop
-
-
         % In order to have females choose from bins (categorical) per the 
         % female preference function - i.e., to have her choose around the sum
         % of her own preference loci, following a distribution:
