@@ -1,5 +1,6 @@
 %% Notes / To Do
-% > 
+% > Check mating datasample
+% > rand()< or rand()<= ? 
 
 
 %% Toggles / Parameters
@@ -12,10 +13,10 @@ plotAnim = false;
 tmax = 1000; 
 
 % Population count
-n = 1000; 
+n = 1000;
 
 % Number of trait loci; total number of possible phen. = nLoci + 1 (includes 0)
-nLoci = 10; 
+nLoci = 100; 
 
 % Number of preference loci
 nLoci_P = nLoci; 
@@ -23,19 +24,24 @@ nLoci_P = nLoci;
 % Number of bins
 %   If nLoci is divisible by nBins (i.e., bin edges fall on integers),
 %   bins include lower bound and not upper
-        % Per MATLAB Docs: 
+        % Per MATLAB Docs:
         % "Each bin includes the leading edge, but does not 
         %  include the trailing edge, except for the last bin 
         %  which includes both edges."
 nBins = 5; 
 
+% Initial population average for trait locus sum
+init_trait_avg = 0.5;
+% Initial population average for trait locus sum
+init_pref_avg = 0.5;
+
 %Female preference fn sigma 
-sig_f =  0.1;
+sig_f =  10;
 
 % Weak stabilizing selection per Lande 1981
 % Male viability selection fn sigma
 natsel = true; 
-sig_m = 1;
+sig_m = 10;
 
     % To view fitness fn shape: 
     
@@ -54,7 +60,7 @@ sig_m = 1;
     %Specify seed as a nonnegative integer, such as rng(1), to initialize the random number generator with that seed.
     %Specify seed as "shuffle" to initialize the generator seed based on the current time.
 
-%rng(1);
+%rng(2);
 
 
 % Troubleshooting param - how many matings are being skipped? 
@@ -75,18 +81,21 @@ figure
 % Define title ahead of time so it is across all subplots
 sgtitle(["t = " + tmax + ";" + "   n = " + n + ";" + "   Loci = "+nLoci + ";" + "   Bins = "+ nBins, "Male viability \sigma = "+ sig_m + ";" + "  Female preference \sigma = " + sig_f])
 
+
 % Initialize females
 % Data structure: 
-%   [Pref. sum     Own sum     Preference loci     Trait loci]   
-F = [zeros(n,1), zeros(n,1), randi([0,1],[n,nLoci + nLoci_P])];
+%   [Trait sum     Pref sum     Trait loci     Preference loci]   
+F = [zeros(n,1), zeros(n,1), ...
+    (rand(n,nLoci) < init_trait_avg), (rand(n,nLoci_P) < init_pref_avg)];
 % Own trait sum (proportion 0/1) 
 F(:,1) = sum(F(:,3:(2+nLoci)),2)  ./ nLoci;
 % Preference sum (proportion 0/1) 
 F(:,2) = sum(F(:,(3+nLoci):(2+nLoci+nLoci_P)),2)  ./ nLoci_P;
 
 % Initialize males
-%   [Pref. sum     Own sum     Preference loci     Trait loci] 
-M = [zeros(n,1), zeros(n,1), randi([0,1],[n,nLoci + nLoci_P])];
+%   [Trait sum     Pref sum     Trait loci     Preference loci]   
+M = [zeros(n,1), zeros(n,1), ...
+    (rand(n,nLoci) < init_trait_avg), (rand(n,nLoci_P) < init_pref_avg)];
 % Own trait sum (proportion 0/1) 
 M(:,1) = sum(M(:,3:(2+nLoci)),2)  ./ nLoci;
 % Preference sum (proportion 0/1) 
@@ -124,82 +133,68 @@ for t = 1:tmax
 
     % Mate choice
 
-    %   Assume polygyny / replacement
-
         % In order to have females choose from bins (categorical) per the 
         % female preference function - i.e., to have her choose around the sum
         % of her own preference loci, following a distribution:
-        % e.g. assume 5 bins, the probability that she will choose from a bin 
-        % is proportional to its height in her fitness function: 
+        % e.g. assume 5 bins, the probability that she will choose a male 
+        % from a bin is proportional to the bin's height in her fitness function: 
         %
         %      █ 
         %    █ █ █
         % '_'_'_'_'_'
         %  1 2 3 4 5
         %
-        % ^ In this case, she is most likely to choose to search within bin 3,
-        %   but may instead search in 2 or 4; she will not search in 1 or 5. 
+        % ^ In this case, she is most likely to choose a male from bin 3,
+        %   but may instead choose one in 2 or 4; she will not choose 1 or 5. 
         %
-        % The way this was implemented was to assign her a bin according to 
-        % the distribution, then choose randomly in that bin. 
-        % This is INSTEAD of having her select from all males with each male
-        % weighted according to the value of its own bin in her fitness
-        % function, because - in short - doing that with datasample() 
-        % produced different distributions less clearly tied to sig_m.  
+        % Female will select from all males with each male weighted 
+        % according to the value/weight of its bin in her fitness function.
 
-    % Store bin number for females to match with males
+    % Store bin number for females to match with males, from preference loci
     discF = discretize(F(:,2).', edges ).';
-    % Assign females bins based on mating weight fns
-    % The following could also just be [1:n]; it uses discretize for
-    % consistency (especially with leading/tailing edge problems)
-    points_d = discretize(points.', edges ).'; 
-    binsF = zeros(n,1);
+    % Initialize array for storing preference wts for each male,
+    % for females in each bin:
+    wtsM = zeros(size(M,1), nBins); %need to use size of M because of natsel
 
-    % Female preference fn adjusts bin of choice per sig_f distribution 
+    % Not fully preallocated because length is stochastic, but initialized:
+    % (stores pairing information)
+    O = [];
+
     for b = 1:nBins
       if ~sum(discF==b) %if no females in bin, move to next bin
         nSkip(t,1) = nSkip(t,1) +1; % For troubleshooting - store that matings were skipped
         continue
       end  
-      % The bin that a female chooses is adjusted FROM her default bin (at
-      % the mean of her distribution) TO an adjacent bin, weighted based on
-      % the preference function evaluated at each bin location. 
-      % Most likely to stay at center bin - might be adjusted up/down. 
-      binsF(discF==b,1) = datasample(points_d,sum(discF==b),'Weights', wts(:,b).');
-      % ^ This returns (n = how many females have the bin in question)
-      % randomly selected values from the full list of 'points' of each bin,
-      % weighted by the fitness function that would be defined using the
-      % bin in question as the center. 
-    end
-    
 
-    %Not fully preallocated because length is stochastic, but initialized:
-    O = [];
-    
-    % Index mask of females in bin b = (binsF==b)
-    for b = 1:nBins
-        % Skip if no females in this bin:
-        if ~sum(binsF==b) || ~sum(discM==b) 
-        continue
-        end
-    
-    % Using datasample(), pull random row (index) from group "males of type b"
-    % WITH REPLACEMENT (polygyny)
-    % with array size 1x(nFemales with bin b)
-    % Call that index from M to get rows for each male
-    % Add that male row to the rows for the females in question -
-    % see explanation of haploid mating in Of, Om
-    O = [O; M(datasample(find(discM == b),sum(binsF==b)),:) + F(binsF==b,:)];
+      % From discM, need to calc weights from  for each male index, per bin
+      % The following replaces the discretized "bin numbers" in discM,
+      % preserving index, with the associated weights for that bin given
+      % the current (female) bin:
+      wtsM = changem(discM,wts(:,b),1:nBins); 
+      % These weights can be passed to datasample so she selects from all
+      % males, each with an associated weight based on the preference
+      % function and her preferred bin.
+            
+      % Using datasample(), pull random rows from males, using weights;
+      % WITH REPLACEMENT (polygyny)
+      % with output array size rows = (nFemales with bin b)
+      % Add male rows to the rows for the females in question -
+      % see explanation of haploid mating in Of, Om below.
+      % Add the new rows to the bottom of the old rows prom previous bins (O;)
+      O = [O; datasample(M, sum(discF==b), 'Weights', wtsM)...
+        + F(discF==b,:)];
+      % O stores the PAIRINGS, from which the OFFSPRING will be randomly
+      % extracted below in Of, Om.
     end
 
     % Offspring (O) may not be as long as F or M  if no males in bin
-    % Draw from pairings randomly until count reaches n; males and females
+    % Draw from pairings (O) randomly until count reaches n; males and females
         Of = O(randsample(1:size(O,1),n,true).',:);
         Om = O(randsample(1:size(O,1),n,true).',:);
 
     % HAPLOID MATING
-    % This is done in a slightly unusual way for performance & avoiding loops.
-    % It does assume free recombination (r = 0.5).
+    % This is done in a slightly unusual way for performance & to avoid loops.
+    % It assumes free recombination (r = 0.5).
     % The binary loci from the male and female are added together, creating
     % values of 0, 1, or 2. 
     % Divide the values by 2; now values are:
@@ -289,5 +284,3 @@ for t = 1:tmax
         hold off
     end
 end
-
-
