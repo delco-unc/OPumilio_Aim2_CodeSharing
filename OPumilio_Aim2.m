@@ -1,5 +1,5 @@
 %% Notes / To Do
-% > Check mating datasample
+% > Check mating datasample - should wts be relative to max? 
 % > rand()< or rand()<= ? 
 
 
