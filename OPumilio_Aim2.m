@@ -1,56 +1,61 @@
 %% Notes / To Do
-% > Check mating datasample - should wts be relative to max? 
-% > rand()< or rand()<= ? 
-
+    % > rand() < or rand() <= ?
 
 %% Toggles / Parameters
-% These are the only things that may need to change between runs. 
-
-% Plot animated or just end plot?
-plotAnim = false;
-
-% Maximum time steps
-tmax = 1000; 
-
-% Population count
-n = 1000;
-
-% Number of trait loci; total number of possible phen. = nLoci + 1 (includes 0)
-nLoci = 100; 
-
-% Number of preference loci
-nLoci_P = nLoci; 
-
-% Number of bins
-%   If nLoci is divisible by nBins (i.e., bin edges fall on integers),
-%   bins include lower bound and not upper
-        % Per MATLAB Docs:
-        % "Each bin includes the leading edge, but does not 
-        %  include the trailing edge, except for the last bin 
-        %  which includes both edges."
-nBins = 5; 
-
-% Initial population average for trait locus sum
-init_trait_avg = 0.5;
-% Initial population average for trait locus sum
-init_pref_avg = 0.5;
-
-%Female preference fn sigma 
-sig_f =  10;
-
-% Weak stabilizing selection per Lande 1981
-% Male viability selection fn sigma
-natsel = true; 
-sig_m = 10;
-
-    % To view fitness fn shape: 
+    % These are the only things that may need to change between runs. 
+    % Variables are in camelCase; toggles are in snake_case
+  
+  % ========================================================== %
+    % Plot animated or just end plot?
+    plot_anim = false;
+  % ========================================================== %
+    % Maximum time steps
+    tMax = 10000; 
+  % ========================================================== %
+    % Population count
+    n = 1000;
+  % ========================================================== %
+    % Number of trait loci; possible phenotype range: 0:nLoci + 1
+    nLoci = 30; 
+  % ========================================================== %
+    % Number of preference loci
+    nLociP = nLoci; 
+  % ========================================================== %
+    % Number of bins
+    %   If nLoci is divisible by nBins (i.e., bin edges fall on integers),
+    %   bins include lower bound and not upper
+            % Per MATLAB Docs:
+            % "Each bin includes the leading edge, but does not 
+            %  include the trailing edge, except for the last bin 
+            %  which includes both edges."
+    nBins = 5; 
+  % ========================================================== %
+    % Initial population average for trait locus sum
+    initTraitAvg = 0.5;
+  % ========================================================== %
+    % Initial population average for trait locus sum
+    initPrefAvg = 0.5;
+  % ========================================================== %
+    %Female preference fn sigma 
+    sigF =  0.5;
+  % ========================================================== %
+    % Psychophysical preferences?
+    psy_pref_exp = true;  % prefs multiply normal pref dist by e^x
+    psy_pref_cdf = false; % prefs change infl. point of cdf
+  % ========================================================== %
+    % Weak stabilizing selection per Lande 1981
+    % Male viability selection fn sigma
+    nat_sel = true; 
+    sigM = 1;
     
-    % plot(d) %not normalized4figure
-    % figure
-    % plot([0:0.05:1],pdf(d,[0:0.05:1])./dMax) %plot fitness dist
-    % xlim([0,1])
-    % ylim([0,1.05])
-    % title("Fitness function")
+        % To view fitness fn shape: 
+        
+        % plot(d) %not normalized4figure
+        % figure
+        % plot([0:0.05:1],pdf(d,[0:0.05:1])./dMax) %plot fitness dist
+        % xlim([0,1])
+        % ylim([0,1.05])
+        % title("Fitness function")
 
 
 %% Other setup
@@ -64,13 +69,13 @@ sig_m = 10;
 
 
 % Troubleshooting param - how many matings are being skipped? 
-nSkip = zeros(tmax,1);
+nSkip = zeros(tMax,1);
 
 % Define bin edges based on nBins
 edges = (0:(1/nBins):1);
 
 % Viability fn:
-d = makedist('Normal','mu',0.5,'sigma',sig_m);
+d = makedist('Normal','mu',0.5,'sigma',sigM);
 dMax = pdf(d,0.5);
     % Viability at phenotype p (0 < p < 1) is = pdf(d,p) / dMax
     % Normalized by dMax so max is 1 regardless of sigma
@@ -79,51 +84,61 @@ dMax = pdf(d,0.5);
 % Setup figures
 figure
 % Define title ahead of time so it is across all subplots
-sgtitle(["t = " + tmax + ";" + "   n = " + n + ";" + "   Loci = "+nLoci + ";" + "   Bins = "+ nBins, "Male viability \sigma = "+ sig_m + ";" + "  Female preference \sigma = " + sig_f])
+sgtitle(["t = " + tMax + ";" + "   n = " + n + ";" + "   Loci = "+nLoci + ";" + "   Bins = "+ nBins, "Male viability \sigma = "+ sigM + ";" + "  Female preference \sigma = " + sigF])
 
 
 % Initialize females
 % Data structure: 
 %   [Trait sum     Pref sum     Trait loci     Preference loci]   
 F = [zeros(n,1), zeros(n,1), ...
-    (rand(n,nLoci) < init_trait_avg), (rand(n,nLoci_P) < init_pref_avg)];
+    (rand(n,nLoci) < initTraitAvg), (rand(n,nLociP) < initPrefAvg)];
 % Own trait sum (proportion 0/1) 
 F(:,1) = sum(F(:,3:(2+nLoci)),2)  ./ nLoci;
 % Preference sum (proportion 0/1) 
-F(:,2) = sum(F(:,(3+nLoci):(2+nLoci+nLoci_P)),2)  ./ nLoci_P;
+F(:,2) = sum(F(:,(3+nLoci):(2+nLoci+nLociP)),2)  ./ nLociP;
 
 % Initialize males
 %   [Trait sum     Pref sum     Trait loci     Preference loci]   
 M = [zeros(n,1), zeros(n,1), ...
-    (rand(n,nLoci) < init_trait_avg), (rand(n,nLoci_P) < init_pref_avg)];
+    (rand(n,nLoci) < initTraitAvg), (rand(n,nLociP) < initPrefAvg)];
 % Own trait sum (proportion 0/1) 
 M(:,1) = sum(M(:,3:(2+nLoci)),2)  ./ nLoci;
 % Preference sum (proportion 0/1) 
-M(:,2) = sum(M(:,(3+nLoci):(2+nLoci+nLoci_P)),2)  ./ nLoci_P;
+M(:,2) = sum(M(:,(3+nLoci):(2+nLoci+nLociP)),2)  ./ nLociP;
 
 
 % Make normally-distributed weights for each bin center to use when females
 % choose males from a distribution of bins (not a continuous distribution)
 points = (edges(:,1:nBins) + (1/(nBins * 2))).'; % Starts at 1 so we have n-1 points
 wts = zeros(nBins); % Initialize array
-p = makedist('Normal','mu',0,'sigma',sig_f); 
+p = makedist('Normal','mu',0,'sigma',sigF); 
+
+
 % mu is 0 because we adjust center based on each point
 % Calculate PDF(points) for each bin center:
 for j = 1:nBins
-    wts(:,j) = pdf(p,(points - points(j)));
+    if ~psy_pref_cdf
+        if ~psy_pref_exp
+            wts(:,j) = pdf(p,(points - points(j)));
+        else
+            wts(:,j) = pdf(p,(points - points(j))) .* exp(points);
+        end
+    else
+        wts(:,j) = cdf(p,(points - points(j)));
+    end
 end
 
 
 %% Life cycle
 
 % Timer for benchmarking; only track if not doing animation
-if ~plotAnim
+if ~plot_anim
     tic
 end
 
 % Loop start
-for t = 1:tmax
-    if natsel
+for t = 1:tMax
+    if nat_sel
         % Delete rows (males) with trait < a unique random value for each male: 
         M(((pdf(d,M(:,1)) ./ dMax) <= rand((size(M,1)),1)),:) = [];
     end
@@ -208,30 +223,30 @@ for t = 1:tmax
 
     % Female offspring
     % Assign these loci as above: 
-    Of(:,3:nLoci+nLoci_P+2) = (rand(size(Of(:,3:nLoci+nLoci_P+2))) <= (Of(:,3:nLoci+nLoci_P+2)./2));
+    Of(:,3:nLoci+nLociP+2) = (rand(size(Of(:,3:nLoci+nLociP+2))) <= (Of(:,3:nLoci+nLociP+2)./2));
     % Store sum of own trait loci: (proportion 0/1) 
     Of(:,1) = sum(Of(:,3:(2+nLoci)),2)  ./ nLoci;
     % Store sum of own preference loci: (proportion 0/1) 
-    Of(:,2) = sum(Of(:,(3+nLoci):(2+nLoci+nLoci_P)),2)  ./ nLoci_P;
+    Of(:,2) = sum(Of(:,(3+nLoci):(2+nLoci+nLociP)),2)  ./ nLociP;
 
     % Repeat for male offspring: 
-    Om(:,3:nLoci+nLoci_P+2) = (rand(size(Om(:,3:nLoci+nLoci_P+2))) <= (Om(:,3:nLoci+nLoci_P+2)./2));
+    Om(:,3:nLoci+nLociP+2) = (rand(size(Om(:,3:nLoci+nLociP+2))) <= (Om(:,3:nLoci+nLociP+2)./2));
     %Store sum of own trait loci: (proportion 0/1) 
     Om(:,1) = sum(Om(:,3:(2+nLoci)),2)  ./ nLoci;
     % Store sum of own preference loci: (proportion 0/1) 
-    Om(:,2) = sum(Om(:,(3+nLoci):(2+nLoci+nLoci_P)),2)  ./ nLoci_P;
+    Om(:,2) = sum(Om(:,(3+nLoci):(2+nLoci+nLociP)),2)  ./ nLociP;
     
     % Pass to F/M arrays for next generation:
     F = Of;
     M = Om;
 
     % Timer for benchmarking; only track if not doing animation
-    if ~plotAnim && t == tmax
+    if ~plot_anim && t == tMax
         toc
     end
 
     % If animated OR if last timestep - show plots
-    if plotAnim | t == tmax 
+    if plot_anim | t == tMax 
         pause(0.1) % Animation speed
         
         % Setup
@@ -245,14 +260,27 @@ for t = 1:tmax
         plotbins = ((0:1:nLoci))./nLoci;
 
         % For plotting generic female preference fn shape: define per sig_f
-        p = makedist('Normal','mu',0.5,'sigma',sig_f);
-        pMax = pdf(p,0.5);
-
+        p = makedist('Normal','mu',0.5,'sigma',sigF);
+        xs = 0:0.05:1;
+        if ~psy_pref_cdf
+            if ~psy_pref_exp
+                ys = pdf(p,0:0.05:1);
+                pMax = pdf(p,0.5);
+            else
+                ys = pdf(p,0:0.05:1) .* exp(xs);
+                pMax = max(ys);
+            end
+            
+        else
+            ys = cdf(p,0:0.05:1);
+            pMax = cdf(p,1);
+        end
+        
         % Actual plotting:
         % Males
         subplot(1,2,1)
         % Plot viability dist
-        plot([0:0.05:1],pdf(d,[0:0.05:1])./dMax)
+        plot(0:0.05:1,pdf(d,0:0.05:1)./dMax)
         hold on
         % Plot bins - where each male falls in the population-defined bins
         % * different from female plot
@@ -269,7 +297,7 @@ for t = 1:tmax
         % Females
         subplot(1,2,2)
         % Plot generic preference fn shape for females
-        plot([0:0.05:1],pdf(p,[0:0.05:1])./pMax, Color='#eb9866', LineStyle=':')
+        plot(xs,ys./pMax, Color='#eb9866', LineStyle=':')
         hold on
         % Plot bins - !different from males! - sum of each female's
         % preference loci. Different color helps remember
