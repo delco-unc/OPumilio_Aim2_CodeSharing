@@ -40,7 +40,7 @@
     sigF =  0.5;
   % ========================================================== %
     % Psychophysical preferences?
-    psy_pref_exp = true;  % prefs multiply normal pref dist by e^x
+    psy_pref_exp = false;  % prefs multiply normal pref dist by e^x
     psy_pref_cdf = false; % prefs change infl. point of cdf
   % ========================================================== %
     % Weak stabilizing selection per Lande 1981
