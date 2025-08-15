@@ -250,7 +250,6 @@ for t = 1:tMax
         pause(0.1) % Animation speed
         
         % Setup
-
         % How MATLAB handles values at bin edges: 
         % "Each bin includes the leading edge, but does not 
         %  include the trailing edge, except for the last bin 
@@ -262,19 +261,21 @@ for t = 1:tMax
         % For plotting generic female preference fn shape: define per sig_f
         p = makedist('Normal','mu',0.5,'sigma',sigF);
         xs = 0:0.05:1;
-        if ~psy_pref_cdf
-            if ~psy_pref_exp
-                ys = pdf(p,0:0.05:1);
-                pMax = pdf(p,0.5);
-            else
-                ys = pdf(p,0:0.05:1) .* exp(xs);
-                pMax = max(ys);
-            end
-            
-        else
-            ys = cdf(p,0:0.05:1);
-            pMax = cdf(p,1);
-        end
+        ys = pdf(p,0:0.05:1);
+        pMax = pdf(p,0.5);
+
+        % if ~psy_pref_cdf
+        %     if ~psy_pref_exp
+        % 
+        %     else
+        %         ys = pdf(p,0:0.05:1) .* exp(xs);
+        %         pMax = max(ys);
+        %     end
+        % 
+        % else
+        %     ys = cdf(p,0:0.05:1);
+        %     pMax = cdf(p,1);
+        % end
         
         % Actual plotting:
         % Males
@@ -285,10 +286,10 @@ for t = 1:tMax
         % Plot bins - where each male falls in the population-defined bins
         % * different from female plot
         histogram(M(:,1), edges, Normalization='probability',...
-            EdgeColor='#1171be', FaceColor='none')
+        EdgeColor='#1171be', FaceColor='none')
         % Plot alleles - sum of own trait loci
         histogram(M(:,1), plotbins, Normalization='probability',...
-            EdgeColor='k', FaceColor='#1171be')
+        EdgeColor='k', FaceColor='#1171be')
         xlim([0,1])
         ylim([0,1.05])
         title("Male")
@@ -302,10 +303,10 @@ for t = 1:tMax
         % Plot bins - !different from males! - sum of each female's
         % preference loci. Different color helps remember
         histogram(F(:,2), edges, Normalization='probability',...
-            EdgeColor='k', FaceColor='none')
+        EdgeColor='k', FaceColor='none')
         % Plot alleles - sum of own trait loci
         histogram(F(:,1), plotbins, Normalization='probability',...
-            EdgeColor='k', FaceColor='#dd5400')
+        EdgeColor='k', FaceColor='#dd5400')
         xlim([0,1])
         ylim([0,1.05])
         title("Female")
