@@ -13,7 +13,7 @@ library(plotly)
 
 # [sigF, sigM, optM, tMax, n, nLoci, nLociP, nBins, mutRt, rngSeed,...
 #  condDens+1, initCoordT, initCoordP, corr_inner, path_length, end_T, end_P ]
-df <- read.csv("results2_4x4_08-15-2025 10-27.csv", header=FALSE)
+df <- read.csv("results2_4x4_08-17-2025 07-13.csv", header=FALSE)
 
 df <- df %>% mutate_at(c('V1','V2','V3','V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11','V12','V13'), as.numeric) %>% #,'V14','V15','V16','V17'
   rename(
@@ -58,11 +58,13 @@ dfp <- df_bins10 %>% mutate(
   x1 = 1,
   y0 = (((sigF^2)/100) + 1)*(0 - (0.5*((sigF^2)/100))),
   y1 = (((sigF^2)/100) + 1)*(1 - (0.5*((sigF^2)/100)))) %>%
-  as.data.frame() %>%
-  ggplot(aes(x=initT, y=initP, shape = factor(mutRt))) + 
+  as.data.frame()
+  
+dfp %>% ggplot(aes(x=initT, y=initP, shape = factor(mutRt))) + 
   geom_jitter(width=0.05, height=0.05)+
   geom_segment(aes(x=x0, xend=x1, y = y0, yend = y1))#df_bins[1,2,3]
   
+
 ggplot(dfp, aes(x=initT, y=initP)) + 
   # ylim(0,1)+
   # xlim(0,1)+
