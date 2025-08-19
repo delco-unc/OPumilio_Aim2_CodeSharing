@@ -202,14 +202,14 @@ dfsig01 %>%
 #correlation
 ggplot(dfsig01, aes(x=as.factor(initT), y=as.factor(initP), fill=corrIn)) + 
   geom_tile()+
-  scale_fill_continuous(limits=c(-0.2, 0.5))+ #df instead of dfp is INTENTIONAL
+  scale_fill_continuous(limits=c(-0.2, 0.5))+ #df instead of dfp is INTENTIONAL - standardize
   facet_grid(rows=vars(dfsig01$mutRt), cols=vars(dfsig01$nBins))+ # , as.table = FALSE
   theme_bw()
 
 # path L - going to have a hard time comparing these? may not be good measure
 ggplot(dfp, aes(x=as.factor(initT), y=as.factor(initP), fill=pathL)) + 
   geom_tile()+
-  scale_fill_continuous(limits=range(df$pathL))+ #df instead of dfp is INTENTIONAL
+  scale_fill_continuous(limits=range(df$pathL))+ #df instead of dfp is INTENTIONAL - standardize
   facet_grid(rows=vars(dfp$mutRt), cols=vars(dfp$sigF))+ # , as.table = FALSE
   theme_bw()
 

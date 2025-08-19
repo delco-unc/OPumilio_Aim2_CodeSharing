@@ -37,6 +37,6 @@ toc
 % start with t -> 5000 at 8/15 11:17 am
 
 filename=[];
-filename = sprintf('results2_50k_%dx%d_%s.csv', condDens, condDens, datestr(now,'mm-dd-yyyy HH-MM'))
+filename = sprintf('results3_%dx%d_%s.csv', condDens, datestr(now,'mm-dd-yyyy HH-MM'))
 'UNCOMMENT AND EXPORT!'
 writematrix(results2,filename)
