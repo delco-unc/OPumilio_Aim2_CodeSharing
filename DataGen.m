@@ -163,6 +163,8 @@ M(:,2) = sum(M(:,(3+nLoci):(2+nLoci+nLociP)),2)  ./ nLociP;
 
 
 lineLande = NaN(tMax,2);
+idleS = 0;
+idleT = 0;
 
 %% Life cycle
 
@@ -298,10 +300,21 @@ for t = 1:tMax
     % avgTM = mean(Om(:,1));
     % avgPF = mean(Of(:,2));
 
-    %mean takes up a lot of time? swap
+    %mean takes up a lot of time? swap:
     avgTM = sum(Om(:,1))./n;
     avgPF = sum(Of(:,2))./n;
     lineLande(t,:)= [avgTM, avgPF];
+    
+    % Store time to stagnant 
+    if idleS < 10 && t ~= 1 
+        if sqrt(sum((lineLande(t,:) - lineLande(t-1,:)) .^2)) < 1/n && idleT == 0
+            idleS = idleS + 1;
+        end
+    elseif t ~= 1 && idleT == 0
+        %break
+        %change corr color at ...
+        idleT = t;
+    end
 
     % Pass to F/M arrays for next generation:
     F = Of;
@@ -369,7 +382,7 @@ path_length = sum(sqrt(sum(dfr.^2,2)));
 end_T = avgTM;
 end_P = avgPF;
 
-results0(rr,:) = [corr_inner, path_length, end_T, end_P];
+results0(rr,:) = [corr_inner, path_length, end_T, end_P, std([F(:,1); M(:,1)], [F(:,2); M(:,2)])];
 % dist from LL - first subtract coords, then get distance btwn that and end coords
 %LL_t = landeline();
 % nevermind do this in post
