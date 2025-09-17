@@ -17,13 +17,13 @@
     FPS = 5;
   % ========================================================== %
     % Maximum time steps
-    tMax = 1000; 
+    tMax = 3000; 
   % ========================================================== %
     % Population count
-    n = 10000;  %actual pop is 2n
+    n = 1000;  %actual pop is 2n
   % ========================================================== %
     % Number of trait loci; possible phenotype range: 0:nLoci + 1
-    nLoci = 2; 
+    nLoci = 100; 
   % ========================================================== %
     % Number of preference loci
     nLociP = nLoci; 
@@ -35,11 +35,11 @@
             % "Each bin includes the leading edge, but does not 
             %  include the trailing edge, except for the last bin 
             %  which includes both edges."
-    nBins = 3; %should really be nLoci + 1
+    nBins = 100; %should really be nLoci + 1
    % ========================================================== %
     % Mutation rt / locus
     % Both: 
-    mutRt = 0;
+    mutRt = 0.00001;
 
     % Trait loci:
     mutRtT = mutRt;
@@ -52,13 +52,13 @@
     mutAsymP = 0;
   % ========================================================== %
     % Initial population average for trait locus sum
-    initTraitAvg = 0.9;
+    initTraitAvg = 0.6;
   % ========================================================== %
     % Initial population average for preference locus sum
     initPrefAvg = 0.2;
   % ========================================================== %
     %Female preference fn sigma 
-    sigF =  0.5;
+    sigF =  0.01;
   % ========================================================== %
     % Psychophysical preferences?
     psy_pref_exp = false;  % prefs multiply normal pref dist by e^x
@@ -67,7 +67,7 @@
     % Weak stabilizing selection per Lande 1981
     % Male viability selection fn sigma
     nat_sel = true; 
-    sigM = 10;
+    sigM = 10000;
     optM = 0.5; %male optimum phenotype
     
         % To view fitness fn shape: 
@@ -87,12 +87,13 @@
     %Specify seed as a nonnegative integer, such as rng(1), to initialize the random number generator with that seed.
     %Specify seed as "shuffle" to initialize the generator seed based on the current time.
 
-rng(6346);
+%rng(6346);
 
 
 % Troubleshooting param - how many matings are being skipped? 
 nSkip = zeros(tMax,1);
 
+bg = zeros(tMax,1);
 % Define bin edges based on nBins
 edges = (0:(1/nBins):1);
 
@@ -341,6 +342,7 @@ for t = 1:tMax
     cov(t,:) = covtemp(1,2);
     covP(t,:) = ptemp(1,2);
     stdv(t,:) = std([F(:,1:2);M(:,1:2)]);
+    bg(t,:)= (cov(t,:) / var([M(:,1);F(:,1)]) );
     % Pass to F/M arrays for next generation:
     F = Of;
     M = Om;
@@ -442,11 +444,12 @@ for t = 1:tMax
         plot(stdv(:,1),'r')
         plot(stdv(:,2),'c')
         xline(idleT,'k:')
+        ylim([-0.05,0.5])
         hold off
 
         subplot(3,2,5) 
         b = bar(sum( (F(:,3:(2+nLoci+nLociP) ) + M(:,3:(2+nLoci+nLociP))) ./ (n*2) ,1 ), 0.9,  'facecolor', 'flat');
-        b.CData = [repmat([0 0.5 0.5],100,1); repmat([0.5 0 0.5],100,1)];
+        b.CData = [repmat([0 0.5 0.5],nLoci,1); repmat([0.5 0 0.5],nLociP,1)];
         ylim([0,1])
 
         subplot(3,2,6) 
@@ -456,6 +459,12 @@ for t = 1:tMax
         plot(0:0.1:1, ((sigF^2)./(sigM^2) + 1)*((0:0.1:1) - optM*((sigF^2)./(sigM^2))), 'k')
         ylim([0,1])
         xlim([0,1])
+        hold off
+
+        figure
+        hold on
+        plot(1:tMax,bg)
+        yline((1+((sigF^2)/(sigM^2)) ))
         hold off
     end
 end
